@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>بطاقة الاستئذان</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6f8;--card:#ffffff;--ink:#16202a;--muted:#5d6b78;--line:#dde3e9;
+  --brand:#0f6b5c;--brand-ink:#ffffff;--ok:#12805c;--ok-bg:#e3f5ec;
+  --bad:#c0362c;--bad-bg:#fbe7e5;--warn:#a86400;--warn-bg:#fff2dc;--gray-bg:#eceff2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1418;--card:#182027;--ink:#e8eef3;--muted:#9aa8b4;--line:#2a3640;
+    --brand:#2bb39b;--brand-ink:#06201b;--ok:#4fd39f;--ok-bg:#12352a;
+    --bad:#ff7b70;--bad-bg:#3a1a18;--warn:#ffbf5c;--warn-bg:#3a2b12;--gray-bg:#222c34;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1418;--card:#182027;--ink:#e8eef3;--muted:#9aa8b4;--line:#2a3640;
+  --brand:#2bb39b;--brand-ink:#06201b;--ok:#4fd39f;--ok-bg:#12352a;
+  --bad:#ff7b70;--bad-bg:#3a1a18;--warn:#ffbf5c;--warn-bg:#3a2b12;--gray-bg:#222c34;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',system-ui,sans-serif;font-size:16px;line-height:1.6}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+header h1{font-size:20px;margin:0;font-weight:800}
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:14px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;padding:10px 4px;border-radius:10px;cursor:pointer}
+.tabs button.on{background:var(--brand);color:var(--brand-ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+label{display:block;font-weight:700;font-size:14px;margin:10px 0 4px}
+input,select{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:800;cursor:pointer;margin-top:12px;background:var(--brand);color:var(--brand-ink)}
+.btn.alt{background:var(--gray-bg);color:var(--ink)}
+.btn.danger{background:var(--bad-bg);color:var(--bad)}
+.hint{color:var(--muted);font-size:13px}
+.msg{padding:10px 12px;border-radius:10px;margin-top:10px;font-weight:700;display:none}
+.msg.show{display:block}
+.msg.ok{background:var(--ok-bg);color:var(--ok)}.msg.bad{background:var(--bad-bg);color:var(--bad)}.msg.info{background:var(--gray-bg);color:var(--ink)}
+.status{border-radius:18px;padding:22px 16px;text-align:center;margin-bottom:14px}
+.status .big{font-size:28px;font-weight:800}
+.status .sub{font-size:15px;margin-top:4px}
+.status.ok{background:var(--ok-bg);color:var(--ok)}
+.status.bad{background:var(--bad-bg);color:var(--bad)}
+.status.warn{background:var(--warn-bg);color:var(--warn)}
+.status.gray{background:var(--gray-bg);color:var(--ink)}
+.count{font-size:44px;font-weight:800;letter-spacing:1px;direction:ltr}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+dt{color:var(--muted);font-size:14px}dd{margin:0;font-weight:700}
+.log{list-style:none;padding:0;margin:0}
+.log li{border-bottom:1px solid var(--line);padding:8px 0;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.log li:last-child{border:0}
+#qr{display:flex;justify-content:center;margin-top:12px}
+#qr img,#qr canvas{background:#fff;padding:8px;border-radius:8px}
+.hidden{display:none}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--gray-bg);color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🪪 بطاقة الاستئذان</h1>
+    <span class="pill" id="devState">—</span>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="issue">إصدار تصريح</button>
+    <button data-tab="verify">التحقق</button>
+    <button data-tab="settings">الإعدادات</button>
+  </nav>
+
+  <!-- إصدار -->
+  <section id="tab-issue" class="hidden">
+    <div class="card">
+      <label>اسم الطالبة</label>
+      <input id="fName" maxlength="30" placeholder="مثال: فاطمة أحمد">
+      <div class="row">
+        <div><label>الصف / الشعبة</label><input id="fClass" maxlength="8" placeholder="5/2"></div>
+        <div><label>السبب</label><select id="fReason"></select></div>
+      </div>
+      <label>ملاحظة (اختياري)</label>
+      <input id="fNote" maxlength="20" placeholder="قصيرة جداً">
+      <div class="row">
+        <div><label>اليوم</label><input id="fDate" type="date"></div>
+        <div><label>من الساعة</label><input id="fFrom" type="time"></div>
+      </div>
+      <label>المدة</label>
+      <select id="fDur">
+        <option value="5">5 دقائق</option><option value="10" selected>10 دقائق</option>
+        <option value="15">15 دقيقة</option><option value="20">20 دقيقة</option>
+        <option value="30">30 دقيقة</option><option value="45">45 دقيقة</option>
+      </select>
+      <button class="btn" id="btnWrite">📲 إصدار وكتابة على البطاقة</button>
+      <div class="msg" id="issueMsg"></div>
+      <p class="hint" id="sizeHint"></p>
+      <div id="issueResult" class="hidden">
+        <button class="btn alt" id="btnCopy">نسخ رابط التصريح</button>
+        <div id="qr"></div>
+      </div>
+    </div>
+    <div class="card">
+      <b>إرجاع البطاقة</b>
+      <p class="hint">عند عودة الطالبة، امسحي البطاقة حتى لا يُعاد استخدامها.</p>
+      <button class="btn danger" id="btnVoid">🧹 مسح البطاقة</button>
+      <div class="msg" id="voidMsg"></div>
+    </div>
+    <div class="card">
+      <b>آخر التصاريح الصادرة من هذا الجهاز</b>
+      <ul class="log" id="log"></ul>
+    </div>
+  </section>
+
+  <!-- تحقق -->
+  <section id="tab-verify" class="hidden">
+    <div id="verifyOut"></div>
+    <div class="card" id="scanCard">
+      <b>قراءة بطاقة</b>
+      <p class="hint">قرّبي البطاقة من الهاتف وسيفتح التصريح تلقائياً. أو اضغطي الزر للقراءة من داخل الصفحة (أندرويد).</p>
+      <button class="btn alt" id="btnScan">🔍 قراءة بطاقة الآن</button>
+      <div class="msg" id="scanMsg"></div>
+    </div>
+  </section>
+
+  <!-- إعدادات -->
+  <section id="tab-settings" class="hidden">
+    <div class="card">
+      <label>رمز المدرسة</label>
+      <input id="sSchool" maxlength="20" placeholder="مثال: AMS-2026">
+      <label>كلمة السر المشتركة (8 أحرف على الأقل)</label>
+      <input id="sPin" type="password" placeholder="••••••••">
+      <label>اسم المعلمة (يظهر في التصريح)</label>
+      <input id="sTeacher" maxlength="15" placeholder="أ. مريم">
+      <button class="btn" id="btnSave">حفظ</button>
+      <div class="msg" id="setMsg"></div>
+      <p class="hint">ضعي <b>نفس رمز المدرسة وكلمة السر</b> على جوالات المعلمات والإداريات المخوّلات بالتحقق. بدونها لا يمكن تأكيد صحة التصريح، ولا يمكن لأي طالبة صنع تصريح مقبول.</p>
+      <p class="hint">كل البيانات تُحفظ على هذا الجهاز فقط ولا تُرسل لأي خادم.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const te=new TextEncoder(), td=new TextDecoder();
+const REASONS=['دورة المياه','العيادة','الإدارة','شرب الماء','المكتبة','المرشدة','أخرى'];
+const store={
+  get(k,d=''){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const baseUrl=()=>location.origin+location.pathname;
+
+function b64u(bytes){let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function unb64u(str){str=str.replace(/-/g,'+').replace(/_/g,'/');while(str.length%4)str+='=';return Uint8Array.from(atob(str),c=>c.charCodeAt(0))}
+
+/* ---------- التوقيع ---------- */
+let _k=null,_kid='';
+async function getKey(){
+  const pin=store.get('hp_pin'),sc=store.get('hp_school');
+  if(!pin||!window.crypto||!crypto.subtle)return null;
+  const id=sc+'|'+pin; if(_k&&_kid===id)return _k;
+  const base=await crypto.subtle.importKey('raw',te.encode(pin),'PBKDF2',false,['deriveKey']);
+  _k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:te.encode('hallpass-v1|'+sc),iterations:150000,hash:'SHA-256'},
+     base,{name:'HMAC',hash:'SHA-256',length:256},false,['sign']);
+  _kid=id; return _k;
+}
+async function signStr(k,str){const s=await crypto.subtle.sign('HMAC',k,te.encode(str));return b64u(new Uint8Array(s).slice(0,12))}
+
+/* ---------- تبويبات ---------- */
+function showTab(t){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  ['issue','verify','settings'].forEach(x=>$('#tab-'+x).classList.toggle('hidden',x!==t));
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  if(b.dataset.tab!=='verify'&&location.hash){history.replaceState(null,'',baseUrl());stopTimer();$('#verifyOut').innerHTML='';}
+  showTab(b.dataset.tab);
+});
+function msg(el,text,kind){const m=$(el);m.textContent=text;m.className='msg show '+kind}
+function devState(){$('#devState').textContent=store.get('hp_pin')?'✅ جهاز مفعّل':'⚠️ جهاز غير مفعّل'}
+
+/* ---------- إصدار ---------- */
+REASONS.forEach((r,i)=>$('#fReason').insertAdjacentHTML('beforeend',`<option value="${i}">${r}</option>`));
+function resetTimeDefaults(){
+  const d=new Date();
+  $('#fDate').value=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  $('#fFrom').value=`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+resetTimeDefaults();
+
+function urlBytes(u){return te.encode(u.replace(/^https?:\/\//,'').replace(/^www\./,'')).length+7}
+function tagFit(n){if(n<=137)return 'تكفي بطاقة NTAG213';if(n<=492)return 'تحتاج NTAG215 أو أكبر';if(n<=860)return 'تحتاج NTAG216';return 'كبيرة جداً — اختصري الاسم أو الملاحظة'}
+
+let lastUrl='';
+async function buildPass(){
+  const k=await getKey();
+  if(!k){msg('#issueMsg','فعّلي الجهاز أولاً من الإعدادات (رمز المدرسة وكلمة السر).','bad');return null}
+  const name=$('#fName').value.trim(), cls=$('#fClass').value.trim();
+  if(!name){msg('#issueMsg','اكتبي اسم الطالبة.','bad');return null}
+  if(!$('#fDate').value||!$('#fFrom').value){msg('#issueMsg','حددي اليوم والوقت.','bad');return null}
+  const [y,mo,d]=$('#fDate').value.split('-').map(Number);
+  const [h,mi]=$('#fFrom').value.split(':').map(Number);
+  const from=new Date(y,mo-1,d,h,mi), to=new Date(from.getTime()+Number($('#fDur').value)*60000);
+  const hm=x=>pad(x.getHours())+pad(x.getMinutes());
+  const serial=b64u(crypto.getRandomValues(new Uint8Array(3)));
+  const arr=[name,cls,Number($('#fReason').value),$('#fNote').value.trim(),
+    `${y}${pad(mo)}${pad(d)}`,hm(from),hm(to),store.get('hp_teacher'),serial];
+  const p=b64u(te.encode(JSON.stringify(arr)));
+  const s=await signStr(k,p);
+  const url=baseUrl()+'#'+p+'.'+s;
+  const n=urlBytes(url);
+  $('#sizeHint').textContent=`حجم التصريح ${n} بايت — ${tagFit(n)}`;
+  return {url,arr,n};
+}
+
+async function writeTag(url,msgEl){
+  if(!('NDEFReader' in window)){
+    msg(msgEl,'هذا الجهاز لا يدعم الكتابة على NFC من المتصفح. استخدمي Chrome على جوال أندرويد، أو استخدمي الرابط/QR بالأسفل.','info');
+    return false;
+  }
+  const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),30000);
+  try{
+    msg(msgEl,'📶 قرّبي البطاقة من خلف الجوال…','info');
+    const r=new NDEFReader();
+    await r.write({records:[{recordType:'url',data:url}]},{signal:ctrl.signal,overwrite:true});
+    if(navigator.vibrate)navigator.vibrate(120);
+    return true;
+  }catch(e){
+    msg(msgEl,e.name==='AbortError'?'انتهى الوقت — حاولي مرة أخرى.':'تعذّرت الكتابة: '+(e.message||e.name),'bad');
+    return false;
+  }finally{clearTimeout(t)}
+}
+
+$('#btnWrite').onclick=async()=>{
+  const pass=await buildPass(); if(!pass)return;
+  if(pass.n>860){msg('#issueMsg','البيانات كبيرة جداً للبطاقة.','bad');return}
+  lastUrl=pass.url;
+  $('#issueResult').classList.remove('hidden');
+  $('#qr').innerHTML='';
+  try{new QRCode($('#qr'),{text:pass.url,width:200,height:200,correctLevel:QRCode.CorrectLevel.L})}catch(e){}
+  const ok=await writeTag(pass.url,'#issueMsg');
+  if(ok){
+    msg('#issueMsg',`✅ تم إصدار التصريح لـ ${pass.arr[0]} حتى ${pass.arr[6].slice(0,2)}:${pass.arr[6].slice(2)}`,'ok');
+  }
+  addLog(pass.arr, ok);
+};
+$('#btnCopy').onclick=async()=>{
+  try{await navigator.clipboard.writeText(lastUrl);msg('#issueMsg','تم نسخ الرابط.','ok')}
+  catch(e){prompt('انسخي الرابط:',lastUrl)}
+};
+$('#btnVoid').onclick=async()=>{
+  const ok=await writeTag(baseUrl()+'#void','#voidMsg');
+  if(ok)msg('#voidMsg','✅ تم مسح البطاقة — أصبحت غير صالحة.','ok');
+};
+
+function addLog(arr,written){
+  let log=[];try{log=JSON.parse(store.get('hp_log','[]'))}catch(e){}
+  log.unshift({n:arr[0],c:arr[1],r:arr[2],d:arr[4],f:arr[5],t:arr[6],w:written});
+  store.set('hp_log',JSON.stringify(log.slice(0,30))); renderLog();
+}
+function renderLog(){
+  let log=[];try{log=JSON.parse(store.get('hp_log','[]'))}catch(e){}
+  $('#log').innerHTML=log.length?log.map(x=>`<li><span>${esc(x.n)} <span class="hint">${esc(x.c)} · ${REASONS[x.r]||''}</span></span><span class="hint">${x.d.slice(6)}/${x.d.slice(4,6)} ${x.f.slice(0,2)}:${x.f.slice(2)}–${x.t.slice(0,2)}:${x.t.slice(2)}${x.w?'':' (رابط)'}</span></li>`).join(''):'<li class="hint">لا يوجد بعد</li>';
+}
+
+/* ---------- تحقق ---------- */
+let timer=null; function stopTimer(){if(timer){clearInterval(timer);timer=null}}
+function parseDT(ymd,hm){return new Date(+ymd.slice(0,4),+ymd.slice(4,6)-1,+ymd.slice(6,8),+hm.slice(0,2),+hm.slice(2,4))}
+
+async function verifyHash(hash){
+  stopTimer(); showTab('verify');
+  const out=$('#verifyOut');
+  if(hash==='#void'){
+    out.innerHTML=`<div class="status gray"><div class="big">بطاقة غير مفعّلة</div><div class="sub">لا يوجد تصريح على هذه البطاقة — أعيديها للمعلمة.</div></div>`;return;
+  }
+  const parts=hash.slice(1).split('.');
+  let arr=null;
+  try{if(parts.length===2)arr=JSON.parse(td.decode(unb64u(parts[0])))}catch(e){}
+  if(!Array.isArray(arr)||arr.length<9){
+    out.innerHTML=`<div class="status bad"><div class="big">❌ تصريح غير صالح</div><div class="sub">البيانات تالفة أو معدّلة.</div></div>`;return;
+  }
+  const k=await getKey();
+  let sig='unknown';
+  if(k)sig=(await signStr(k,parts[0]))===parts[1]?'ok':'bad';
+  const [name,cls,reason,note,ymd,f,t,teacher]=arr;
+  const from=parseDT(ymd,f), to=parseDT(ymd,t);
+  const details=`<div class="card"><dl>
+    <dt>الطالبة</dt><dd>${esc(name)}</dd>
+    <dt>الصف</dt><dd>${esc(cls)||'—'}</dd>
+    <dt>السبب</dt><dd>${esc(REASONS[reason]||'—')}${note?' — '+esc(note):''}</dd>
+    <dt>اليوم</dt><dd>${from.toLocaleDateString('ar-BH',{weekday:'long',day:'numeric',month:'long'})}</dd>
+    <dt>الوقت</dt><dd>${f.slice(0,2)}:${f.slice(2)} ← ${t.slice(0,2)}:${t.slice(2)}</dd>
+    <dt>المعلمة</dt><dd>${esc(teacher)||'—'}</dd></dl></div>`;
+  const render=()=>{
+    const now=new Date(); let st;
+    if(sig==='bad') st=`<div class="status bad"><div class="big">⛔ تصريح مزوّر</div><div class="sub">التوقيع لا يطابق — لم يصدر من معلمة مخوّلة.</div></div>`;
+    else if(now<from) st=`<div class="status warn"><div class="big">⏳ لم يبدأ بعد</div><div class="sub">يبدأ الساعة ${f.slice(0,2)}:${f.slice(2)}</div></div>`;
+    else if(now>to) st=`<div class="status bad"><div class="big">⌛ تصريح منتهي</div><div class="sub">انتهى الساعة ${t.slice(0,2)}:${t.slice(2)}</div></div>`;
+    else{
+      const r=Math.max(0,Math.floor((to-now)/1000));
+      const c=`<div class="count">${pad(Math.floor(r/60))}:${pad(r%60)}</div>`;
+      st=sig==='ok'
+        ?`<div class="status ok"><div class="big">✅ تصريح ساري</div>${c}<div class="sub">الوقت المتبقي</div></div>`
+        :`<div class="status gray"><div class="big">ضمن الوقت — غير متحقق</div>${c}<div class="sub">هذا الجهاز غير مفعّل، تحققي من جوال معلمة أو إدارية.</div></div>`;
+    }
+    out.innerHTML=st+details;
+  };
+  render(); timer=setInterval(render,1000);
+}
+
+$('#btnScan').onclick=async()=>{
+  if(!('NDEFReader' in window)){msg('#scanMsg','القراءة من داخل الصفحة متاحة في Chrome على أندرويد فقط. على الآيفون: قرّبي البطاقة وسيفتح الرابط تلقائياً.','info');return}
+  try{
+    const r=new NDEFReader(); await r.scan();
+    msg('#scanMsg','📶 قرّبي البطاقة…','info');
+    r.onreading=e=>{
+      for(const rec of e.message.records){
+        if(rec.recordType==='url'){
+          const u=td.decode(rec.data); const i=u.indexOf('#');
+          if(i>=0){if(navigator.vibrate)navigator.vibrate(80);msg('#scanMsg','تمت القراءة.','ok');history.replaceState(null,'',baseUrl()+u.slice(i));verifyHash(u.slice(i));return}
+        }
+      }
+      msg('#scanMsg','البطاقة لا تحتوي تصريحاً.','bad');
+    };
+  }catch(e){msg('#scanMsg','تعذّرت القراءة: '+(e.message||e.name),'bad')}
+};
+
+/* ---------- إعدادات ---------- */
+$('#sSchool').value=store.get('hp_school');
+$('#sTeacher').value=store.get('hp_teacher');
+$('#btnSave').onclick=()=>{
+  const pin=$('#sPin').value, sc=$('#sSchool').value.trim();
+  if(!sc){msg('#setMsg','اكتبي رمز المدرسة.','bad');return}
+  if(pin&&pin.length<8){msg('#setMsg','كلمة السر يجب أن تكون 8 أحرف على الأقل.','bad');return}
+  if(!pin&&!store.get('hp_pin')){msg('#setMsg','اكتبي كلمة السر.','bad');return}
+  store.set('hp_school',sc); store.set('hp_teacher',$('#sTeacher').value.trim());
+  if(pin)store.set('hp_pin',pin);
+  _k=null; $('#sPin').value=''; devState(); msg('#setMsg','✅ تم الحفظ — الجهاز مفعّل.','ok');
+};
+
+/* ---------- تشغيل ---------- */
+renderLog(); devState();
+if(!window.isSecureContext)msg('#issueMsg','يجب فتح الصفحة عبر رابط https لتعمل الحماية وNFC.','bad');
+if(location.hash.length>1)verifyHash(location.hash);
+else showTab(store.get('hp_pin')?'issue':'settings');
+window.addEventListener('hashchange',()=>{if(location.hash.length>1)verifyHash(location.hash)});
+</script>
+</body>
+</html>
